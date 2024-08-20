@@ -1,9 +1,14 @@
 const knex = require("../database/knex");
+const AppError = require("../utils/AppError");
 
 class NotesController {
     async create(req, res) {
         const { title, description, tags, links } = req.body;
         const { user_id } = req.params;
+
+        if(!user_id) {
+            throw new AppError('User not found')
+        }
 
         const [ note_id ] = await knex("notes").insert({
             title, 
@@ -58,6 +63,14 @@ class NotesController {
             status: `Note N° ${ id } successfully deleted.`  
         });
 
+    }
+
+    async index(req, res) {
+        const { user_id, title } = req.query;
+
+        const notes = await knex("notes").where({ user_id }).whereLike(`%${title}%`).orderBy("title");
+
+        return res.json(notes);
     }
 }
 
